@@ -32,5 +32,6 @@ After running this model, the best team in the 2023 UFA was found to be the DC B
 This model does a good job in showing some of the great talent in the UFA. Two things that the best players exhibit are a scoring ability, whether that is goals or assists, and the ability to not turn the disk over. 
 After creating this model, there is many changes that need to be made to value other abilities on the field. There are still many players who are good players and trusted by teams that are rated as average players, meaning there are other ways to show their talent using the on-field statistics. 
 Many of the players who are rated highly in this model are offensive handlers, meaning they don't play many D-Points (Points starting on defense) and they usually are the players with high completion rates, meaning they score a high volume of their own team's points. 
+Also, this model heavily favors offensive players compared to defensive players. 
 ## Author
 Nicholas Guillet, a Junior Computer Engineer at Villanova University and advid ultimate frisbee fan. 
