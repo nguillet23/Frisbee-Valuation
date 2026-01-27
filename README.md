@@ -22,6 +22,7 @@ After that, the score is found by multiplying the weights by the Zscores. The fi
 The results of the model were a little surprising due to the dominance that the New York Empire had on the league. They did rank highly, but other teams appear that they should be done even better. 
 ### Best Players
 Only 25 players got a score above 1 about of the 460 players in the league; the team with the most players in that group was the Atlanta Hustle with 4, DC Breeze with 3, and many other teams with 2. The best players overall were Andrew Roy of the DC Breeze and Ryan Osgar of the New York Empire. These two players were separated by the less than 1%, while they were ahead of third place by another 10%. 
+![Best Players](5%20Analysis/Best_Players.png)
 #### Why Andrew and Ryan
 Andrew Roy and Ryan Osgar were seen as the two top players because of their ability to be high volume users, as well as not turning the disk over. The linear regression model valued many different stats, but its most important weighting was the idea of not turning the disk over. The highest positive weight was for goals at a weight above 1, while the lowest weight was for turns below -3, meaning less turns are 3 times as more important than scoring goals. 
 ### Best Teams
