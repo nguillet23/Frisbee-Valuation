@@ -27,7 +27,7 @@ Andrew Roy and Ryan Osgar were seen as the two top players because of their abil
 ### Best Teams
 After running this model, the best team in the 2023 UFA was found to be the DC Breeze. Despite the results of the season where the New York Empire went undefeated to the championship, their Arch-Rival had on average the best players playing. One reason this might be is due to one of New York Empire's big three, Jack Williams, having a low score in this model, compared to teammates Ryan Osgar and Ben Jagt having some of the highest scores in the league. Jack Williams's does still bring up a major question; why does a high usage player who scores many points, but is a little risk-taker lower than expected? 
 ### Team Comparisons
-![Team Average Scores](4 Weights Regression/team_avg_chart.png)
+![Team Average Scores](4%20Weights%20Regression/team_avg_chart.png)
 ## What Next
 This model does a good job in showing some of the great talent in the UFA. Two things that the best players exhibit are a scoring ability, whether that is goals or assists, and the ability to not turn the disk over. 
 After creating this model, there is many changes that need to be made to value other abilities on the field. There are still many players who are good players and trusted by teams that are rated as average players, meaning there are other ways to show their talent using the on-field statistics. 
