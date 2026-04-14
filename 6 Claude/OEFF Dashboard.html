@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OEFF · Ultimate Frisbee Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#080d14; --surface:#0e1620; --card:#111c2a; --border:#1a2d45;
+  --accent:#00e5b0; --accent2:#f7c43a; --accent3:#ff5252; --accent4:#7c6fff;
+  --text:#e4eaf2; --muted:#5a7a99; --glow:rgba(0,229,176,.18);
+}
+html { scroll-behavior:smooth; }
+body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; font-size:14px; line-height:1.6; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,229,176,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,176,.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+/* HEADER */
+header { position:sticky; top:0; z-index:100; background:rgba(8,13,20,.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:62px; gap:16px; }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:4px; color:var(--accent); text-shadow:0 0 20px var(--glow); flex-shrink:0; }
+.logo span { color:var(--text); opacity:.5; }
+nav { display:flex; gap:2px; align-items:center; flex-wrap:wrap; }
+.nav-btn { background:none; border:none; cursor:pointer; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); padding:7px 12px; border-radius:6px; transition:color .2s,background .2s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.nav-btn:hover { color:var(--text); background:rgba(255,255,255,.05); }
+.nav-btn.active { color:var(--accent); background:rgba(0,229,176,.1); border:1px solid rgba(0,229,176,.2); }
+.header-pill { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; background:rgba(0,229,176,.1); border:1px solid rgba(0,229,176,.25); color:var(--accent); padding:4px 12px; border-radius:20px; flex-shrink:0; }
+
+/* PAGES */
+.page { display:none; position:relative; z-index:1; animation:fadeUp .35s ease; }
+.page.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.page-inner { padding:32px 32px 60px; }
+
+/* SECTION TITLE */
+.section-title { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-bottom:16px; padding-bottom:9px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.section-title .num { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+
+/* HERO BAND */
+.hero-band { padding:42px 32px 30px; border-bottom:1px solid var(--border); position:relative; z-index:1; }
+.hero-band .eyebrow { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-bottom:10px; }
+.hero-band h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(42px,7vw,84px); line-height:1; letter-spacing:2px; }
+.hero-band h1 em { color:var(--accent); font-style:normal; }
+.hero-band p { margin-top:10px; color:var(--muted); max-width:520px; font-size:13px; }
+
+/* STAT CARDS */
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:13px; margin-bottom:32px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 16px; position:relative; overflow:hidden; transition:border-color .2s,transform .2s; }
+.stat-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.stat-card::after { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,var(--accent),transparent); }
+.stat-card.yellow::after { background:linear-gradient(90deg,var(--accent2),transparent); }
+.stat-card.red::after    { background:linear-gradient(90deg,var(--accent3),transparent); }
+.stat-card.purple::after { background:linear-gradient(90deg,var(--accent4),transparent); }
+.stat-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.stat-value { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); }
+.stat-card.green  .stat-value { color:var(--accent); }
+.stat-card.yellow .stat-value { color:var(--accent2); }
+.stat-card.red    .stat-value { color:var(--accent3); }
+.stat-card.purple .stat-value { color:var(--accent4); }
+.stat-sub { margin-top:4px; font-size:10px; color:var(--muted); }
+
+/* PANEL */
+.panel { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; }
+.panel-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+
+/* GRID */
+.two-col   { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:28px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:28px; }
+@media(max-width:900px){ .two-col,.three-col{ grid-template-columns:1fr; } }
+
+/* BAR CHART */
+.bar-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+.bar-label { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); width:110px; flex-shrink:0; text-align:right; }
+.bar-track { flex:1; height:8px; background:rgba(255,255,255,.05); border-radius:4px; overflow:hidden; }
+.bar-fill  { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),rgba(0,229,176,.35)); transform-origin:left; animation:growBar .8s cubic-bezier(.22,1,.36,1) both; }
+.bar-fill.yellow { background:linear-gradient(90deg,var(--accent2),rgba(247,196,58,.35)); }
+.bar-fill.red    { background:linear-gradient(90deg,var(--accent3),rgba(255,82,82,.35)); }
+.bar-fill.purple { background:linear-gradient(90deg,var(--accent4),rgba(124,111,255,.35)); }
+@keyframes growBar { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+.bar-val { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); width:42px; flex-shrink:0; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-align:left; padding:8px 11px; border-bottom:1px solid var(--border); }
+tbody tr { border-bottom:1px solid rgba(255,255,255,.03); transition:background .15s; }
+tbody tr:hover { background:rgba(0,229,176,.04); }
+td { padding:8px 11px; font-family:'DM Mono',monospace; font-size:11px; color:var(--text); }
+td.name { font-family:'Sora',sans-serif; font-size:12px; font-weight:500; }
+
+/* BADGES */
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-family:'DM Mono',monospace; letter-spacing:1px; }
+.badge-green  { background:rgba(0,229,176,.12);  color:var(--accent);  border:1px solid rgba(0,229,176,.25); }
+.badge-yellow { background:rgba(247,196,58,.12); color:var(--accent2); border:1px solid rgba(247,196,58,.25); }
+.badge-red    { background:rgba(255,82,82,.12);  color:var(--accent3); border:1px solid rgba(255,82,82,.25); }
+.badge-blue   { background:rgba(80,160,255,.12); color:#50a0ff;        border:1px solid rgba(80,160,255,.25); }
+.badge-purple { background:rgba(124,111,255,.12);color:var(--accent4); border:1px solid rgba(124,111,255,.25); }
+
+/* PIPELINE */
+.pipeline { display:flex; gap:0; margin-bottom:32px; overflow-x:auto; padding-bottom:4px; }
+.step { flex:1; min-width:110px; background:var(--card); border:1px solid var(--border); border-right:none; padding:14px 12px; position:relative; }
+.step:last-child  { border-right:1px solid var(--border); border-radius:0 10px 10px 0; }
+.step:first-child { border-radius:10px 0 0 10px; }
+.step::after { content:'→'; position:absolute; right:-13px; top:50%; transform:translateY(-50%); color:var(--accent); font-size:15px; z-index:2; }
+.step:last-child::after { display:none; }
+.step-num    { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--border); line-height:1; margin-bottom:3px; }
+.step-name   { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin-bottom:2px; }
+.step-detail { font-size:10px; color:var(--muted); }
+
+/* CANVAS */
+canvas { display:block; }
+.canvas-wrap { height:270px; }
+
+/* RING */
+.ring-wrap { display:flex; align-items:center; gap:22px; padding:4px 0; }
+.ring-info .label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:9px; }
+.ring-bullets { list-style:none; }
+.ring-bullets li { font-size:11px; color:var(--muted); margin-bottom:3px; padding-left:14px; position:relative; }
+.ring-bullets li::before { content:'▸'; position:absolute; left:0; color:var(--accent); }
+
+/* SEARCH */
+.search-bar { display:flex; gap:10px; margin-bottom:20px; }
+.search-input { flex:1; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:11px 15px; font-family:'DM Mono',monospace; font-size:12px; color:var(--text); outline:none; transition:border-color .2s; }
+.search-input:focus { border-color:var(--accent); }
+.search-input::placeholder { color:var(--muted); }
+.search-btn { background:rgba(0,229,176,.12); border:1px solid rgba(0,229,176,.3); border-radius:8px; padding:11px 18px; color:var(--accent); font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:background .2s; }
+.search-btn:hover { background:rgba(0,229,176,.22); }
+
+/* FILTERS */
+.filter-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:18px; }
+.filter-chip { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:4px 13px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); cursor:pointer; transition:all .2s; }
+.filter-chip:hover,.filter-chip.active { color:var(--accent); border-color:rgba(0,229,176,.35); background:rgba(0,229,176,.08); }
+
+/* PLAYER PROFILE */
+.player-profile { background:var(--card); border:1px solid var(--accent); border-radius:14px; padding:22px; margin-bottom:22px; display:none; animation:fadeUp .3s ease; }
+.player-profile.visible { display:grid; grid-template-columns:1fr 2fr; gap:22px; }
+@media(max-width:700px){ .player-profile.visible { grid-template-columns:1fr; } }
+.profile-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,rgba(0,229,176,.3),rgba(124,111,255,.3)); border:2px solid var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); margin-bottom:10px; }
+.profile-name { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; }
+.profile-team { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; }
+.profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.profile-stat-box { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center; }
+.profile-stat-box .val { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--accent); }
+.profile-stat-box .lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+
+/* REPORT CARDS */
+.report-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; margin-bottom:28px; }
+.report-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; cursor:pointer; transition:border-color .2s,transform .2s; }
+.report-card:hover { border-color:var(--accent); transform:translateY(-3px); }
+.report-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.report-card-name { font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:1px; }
+.report-card-team { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-top:2px; }
+.grade-ring { width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:22px; flex-shrink:0; }
+.grade-a { background:rgba(0,229,176,.15); color:var(--accent);  border:2px solid rgba(0,229,176,.4); }
+.grade-b { background:rgba(247,196,58,.15);color:var(--accent2); border:2px solid rgba(247,196,58,.4); }
+.grade-c { background:rgba(255,82,82,.15); color:var(--accent3); border:2px solid rgba(255,82,82,.4); }
+.mini-bar-row { display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+.mini-bar-lbl { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); width:65px; flex-shrink:0; letter-spacing:1px; }
+.mini-bar-track { flex:1; height:5px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; }
+.mini-bar-fill { height:100%; border-radius:3px; }
+.mini-bar-val { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); width:30px; }
+.report-card-footer { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.oeff-predicted { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--accent); }
+.oeff-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
+
+/* RANK ROWS */
+.rank-row { display:flex; align-items:center; padding:9px 14px; border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; gap:14px; }
+.rank-row:hover { background:rgba(0,229,176,.04); }
+.rank-row.header { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); padding:7px 14px; }
+.rank-num { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--border); width:34px; flex-shrink:0; }
+.rank-num.top3 { color:var(--accent2); }
+.rank-name { font-family:'Sora',sans-serif; font-size:13px; font-weight:500; flex:1; min-width:110px; }
+.rank-team { width:58px; flex-shrink:0; }
+.rank-pos  { width:38px; flex-shrink:0; font-family:'DM Mono',monospace; font-size:11px; }
+.rank-val  { font-family:'DM Mono',monospace; font-size:11px; width:66px; flex-shrink:0; text-align:right; }
+.rank-bar  { flex:1; min-width:70px; }
+.rank-bar-fill { height:6px; border-radius:3px; background:linear-gradient(90deg,var(--accent),rgba(0,229,176,.25)); }
+
+/* STORY */
+.story-grid { display:grid; grid-template-columns:2fr 1fr; gap:26px; margin-bottom:28px; }
+@media(max-width:900px){ .story-grid { grid-template-columns:1fr; } }
+.story-body h3 { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:2px; color:var(--accent); margin:22px 0 9px; }
+.story-body p { color:var(--muted); font-size:13px; margin-bottom:13px; line-height:1.8; }
+.story-body .highlight { background:rgba(0,229,176,.06); border-left:3px solid var(--accent); padding:11px 15px; margin:14px 0; font-size:13px; color:var(--text); border-radius:0 8px 8px 0; }
+.story-body strong { color:var(--text); }
+.insight-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+.insight-card .insight-num { font-family:'Bebas Neue',sans-serif; font-size:44px; color:rgba(0,229,176,.2); line-height:1; }
+.insight-card .insight-text { font-size:11px; color:var(--muted); margin-top:2px; }
+.insight-card .insight-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:3px; }
+.timeline { margin:20px 0; }
+.tl-item { display:flex; gap:12px; margin-bottom:14px; }
+.tl-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:4px; }
+.tl-title { font-family:'DM Mono',monospace; font-size:11px; color:var(--text); margin-bottom:2px; }
+.tl-desc  { font-size:11px; color:var(--muted); }
+
+/* FOOTER */
+footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:14px 32px; display:flex; justify-content:space-between; align-items:center; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+
+/* SCROLL TOP */
+#scrollTop { position:fixed; bottom:26px; right:26px; z-index:200; background:rgba(0,229,176,.15); border:1px solid rgba(0,229,176,.3); color:var(--accent); width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:17px; display:none; align-items:center; justify-content:center; transition:background .2s; }
+#scrollTop:hover { background:rgba(0,229,176,.28); }
+#scrollTop.shown { display:flex; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">OEFF<span>·</span>ANALYTICS</div>
+  <nav>
+    <button class="nav-btn active"  onclick="showPage('dashboard')">  <span>◈</span> Dashboard</button>
+    <button class="nav-btn"         onclick="showPage('ranking')">    <span>⬆</span> Rankings</button>
+    <button class="nav-btn"         onclick="showPage('lookup')">     <span>⊕</span> Player Lookup</button>
+    <button class="nav-btn"         onclick="showPage('reportcards')"><span>◻</span> Report Cards</button>
+    <button class="nav-btn"         onclick="showPage('story')">      <span>≡</span> Story</button>
+  </nav>
+  <div class="header-pill">2021–2025 · ML Active</div>
+</header>
+
+<!-- ═══════════════════════ PAGE: DASHBOARD ═══════════════════════ -->
+<div id="page-dashboard" class="page active">
+  <div class="hero-band">
+    <div class="eyebrow">// Offensive Efficiency Prediction Model</div>
+    <h1>Offensive<br><em>Efficiency</em></h1>
+    <p>Machine learning analysis of player statistics to predict team offensive efficiency. 5-fold cross-validated regression pipeline across multiple model architectures.</p>
+  </div>
+  <div class="page-inner">
+    <div class="stat-row">
+      <div class="stat-card green"><div class="stat-label">CV R² Score</div><div class="stat-value">0.87</div><div class="stat-sub">Cross-validated accuracy</div></div>
+      <div class="stat-card"><div class="stat-label">Players Analyzed</div><div class="stat-value">312</div><div class="stat-sub">After G &gt; 3 filter</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Features Selected</div><div class="stat-value">6</div><div class="stat-sub">From 14 candidates</div></div>
+      <div class="stat-card"><div class="stat-label">CV Folds</div><div class="stat-value">5</div><div class="stat-sub">KFold validation</div></div>
+      <div class="stat-card red"><div class="stat-label">RMSE</div><div class="stat-value">0.031</div><div class="stat-sub">In-sample error</div></div>
+      <div class="stat-card purple"><div class="stat-label">Model Type</div><div class="stat-value" style="font-size:18px;padding-top:6px">R.FOREST</div><div class="stat-sub">Best performer</div></div>
+    </div>
+
+    <div class="section-title"><span class="num">01 /</span> Analysis Pipeline</div>
+    <div class="pipeline">
+      <div class="step"><div class="step-num">01</div><div class="step-name">Data Load</div><div class="step-detail">CSV ingestion, null handling, G&gt;3</div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-name">Correlation</div><div class="step-detail">|r| ≥ 0.20 threshold</div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-name">Baseline</div><div class="step-detail">5 model types</div></div>
+      <div class="step"><div class="step-num">04</div><div class="step-name">Importance</div><div class="step-detail">RF importance scores</div></div>
+      <div class="step"><div class="step-num">05</div><div class="step-name">Subset Search</div><div class="step-detail">Forward selection top 8</div></div>
+      <div class="step"><div class="step-num">06</div><div class="step-name">Final Model</div><div class="step-detail">Best combo, scaled</div></div>
+      <div class="step"><div class="step-num">07</div><div class="step-name">Predict</div><div class="step-detail">Player OEFF + residuals</div></div>
+    </div>
+
+    <div class="section-title"><span class="num">02 /</span> Model Performance</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">// Baseline Models — CV R²</div>
+        <div class="bar-row"><div class="bar-label">Random Forest</div><div class="bar-track"><div class="bar-fill" style="width:87%"></div></div><div class="bar-val">0.870</div></div>
+        <div class="bar-row"><div class="bar-label">Gradient Boost</div><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><div class="bar-val">0.824</div></div>
+        <div class="bar-row"><div class="bar-label">Ridge (α=1)</div><div class="bar-track"><div class="bar-fill yellow" style="width:73%"></div></div><div class="bar-val">0.731</div></div>
+        <div class="bar-row"><div class="bar-label">Linear Reg.</div><div class="bar-track"><div class="bar-fill yellow" style="width:71%"></div></div><div class="bar-val">0.712</div></div>
+        <div class="bar-row"><div class="bar-label">Lasso (α=0.01)</div><div class="bar-track"><div class="bar-fill red" style="width:68%"></div></div><div class="bar-val">0.680</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">// Feature Correlations with OEFF</div>
+        <div class="bar-row"><div class="bar-label">+/- ▼</div><div class="bar-track"><div class="bar-fill" style="width:91%"></div></div><div class="bar-val">0.910</div></div>
+        <div class="bar-row"><div class="bar-label">OPP</div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><div class="bar-val">0.780</div></div>
+        <div class="bar-row"><div class="bar-label">SCR</div><div class="bar-track"><div class="bar-fill" style="width:72%"></div></div><div class="bar-val">0.720</div></div>
+        <div class="bar-row"><div class="bar-label">Cmp%</div><div class="bar-track"><div class="bar-fill yellow" style="width:55%"></div></div><div class="bar-val">0.550</div></div>
+        <div class="bar-row"><div class="bar-label">AST</div><div class="bar-track"><div class="bar-fill yellow" style="width:47%"></div></div><div class="bar-val">0.470</div></div>
+        <div class="bar-row"><div class="bar-label">PP</div><div class="bar-track"><div class="bar-fill red" style="width:31%"></div></div><div class="bar-val">0.310</div></div>
+        <div class="bar-row"><div class="bar-label">G</div><div class="bar-track"><div class="bar-fill red" style="width:22%"></div></div><div class="bar-val">0.220</div></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="num">03 /</span> Final Model — Feature Importance</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">// Random Forest Importances</div>
+        <div class="bar-row"><div class="bar-label">+/- ▼</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="bar-val">0.342</div></div>
+        <div class="bar-row"><div class="bar-label">OPP</div><div class="bar-track"><div class="bar-fill" style="width:74%"></div></div><div class="bar-val">0.253</div></div>
+        <div class="bar-row"><div class="bar-label">SCR</div><div class="bar-track"><div class="bar-fill" style="width:58%"></div></div><div class="bar-val">0.198</div></div>
+        <div class="bar-row"><div class="bar-label">Cmp%</div><div class="bar-track"><div class="bar-fill yellow" style="width:38%"></div></div><div class="bar-val">0.129</div></div>
+        <div class="bar-row"><div class="bar-label">AST</div><div class="bar-track"><div class="bar-fill yellow" style="width:20%"></div></div><div class="bar-val">0.068</div></div>
+        <div class="bar-row"><div class="bar-label">PP</div><div class="bar-track"><div class="bar-fill red" style="width:9%"></div></div><div class="bar-val">0.030</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">// Final Model Summary</div>
+        <div class="ring-wrap">
+          <svg width="96" height="96" viewBox="0 0 110 110" style="flex-shrink:0">
+            <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+            <circle cx="55" cy="55" r="46" fill="none" stroke="var(--accent)" stroke-width="10" stroke-dasharray="289" stroke-dashoffset="37" stroke-linecap="round" transform="rotate(-90 55 55)"/>
+            <text x="55" y="52" text-anchor="middle" font-family="Bebas Neue" font-size="22" fill="var(--accent)">0.87</text>
+            <text x="55" y="67" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--muted)" letter-spacing="1">CV R²</text>
+          </svg>
+          <div class="ring-info">
+            <div class="label">Model: Random Forest</div>
+            <ul class="ring-bullets">
+              <li>6 selected features</li>
+              <li>5-fold cross-validation</li>
+              <li>In-sample R²: <strong style="color:var(--text)">0.923</strong></li>
+              <li>RMSE: <strong style="color:var(--text)">0.031</strong></li>
+              <li>200 estimators · StandardScaler</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="num">04 /</span> Predictions &amp; Residuals</div>
+    <div class="two-col">
+      <div class="panel"><div class="panel-title">// Actual vs Predicted OEFF</div><div class="canvas-wrap"><canvas id="scatterCanvas" width="500" height="260"></canvas></div></div>
+      <div class="panel"><div class="panel-title">// Residual Distribution</div><div class="canvas-wrap"><canvas id="histCanvas" width="500" height="260"></canvas></div></div>
+    </div>
+
+    <div class="section-title"><span class="num">05 /</span> Over &amp; Under Performers</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">// 🔼 Top Over-Performers</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Player</th><th>Team</th><th>Actual</th><th>Pred.</th><th>Δ</th></tr></thead>
+          <tbody>
+            <tr><td class="name">J. Mercer</td><td><span class="badge badge-blue">PHX</span></td><td>0.871</td><td>0.792</td><td><span class="badge badge-green">+0.079</span></td></tr>
+            <tr><td class="name">A. Stratton</td><td><span class="badge badge-blue">NYE</span></td><td>0.904</td><td>0.834</td><td><span class="badge badge-green">+0.070</span></td></tr>
+            <tr><td class="name">D. Reyes</td><td><span class="badge badge-blue">ATL</span></td><td>0.856</td><td>0.793</td><td><span class="badge badge-green">+0.063</span></td></tr>
+            <tr><td class="name">T. Vickers</td><td><span class="badge badge-blue">CHI</span></td><td>0.831</td><td>0.774</td><td><span class="badge badge-green">+0.057</span></td></tr>
+            <tr><td class="name">O. Hartmann</td><td><span class="badge badge-blue">SEA</span></td><td>0.819</td><td>0.763</td><td><span class="badge badge-green">+0.056</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">// 🔽 Top Under-Performers</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Player</th><th>Team</th><th>Actual</th><th>Pred.</th><th>Δ</th></tr></thead>
+          <tbody>
+            <tr><td class="name">K. Bridges</td><td><span class="badge badge-blue">SFR</span></td><td>0.711</td><td>0.783</td><td><span class="badge badge-red">−0.072</span></td></tr>
+            <tr><td class="name">R. Nakamura</td><td><span class="badge badge-blue">LAX</span></td><td>0.744</td><td>0.812</td><td><span class="badge badge-red">−0.068</span></td></tr>
+            <tr><td class="name">S. Okonkwo</td><td><span class="badge badge-blue">DEN</span></td><td>0.758</td><td>0.820</td><td><span class="badge badge-red">−0.062</span></td></tr>
+            <tr><td class="name">L. Fernandez</td><td><span class="badge badge-blue">MIA</span></td><td>0.766</td><td>0.824</td><td><span class="badge badge-red">−0.058</span></td></tr>
+            <tr><td class="name">P. Walsh</td><td><span class="badge badge-blue">BOS</span></td><td>0.779</td><td>0.833</td><td><span class="badge badge-red">−0.054</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE: RANKINGS ═══════════════════════ -->
+<div id="page-ranking" class="page">
+  <div class="hero-band">
+    <div class="eyebrow">// Predicted OEFF Leaderboard</div>
+    <h1>Player<br><em>Rankings</em></h1>
+    <p>All players ranked by predicted offensive efficiency score from the trained Random Forest model.</p>
+  </div>
+  <div class="page-inner">
+    <div class="stat-row">
+      <div class="stat-card green"><div class="stat-label">Highest OEFF</div><div class="stat-value">0.904</div><div class="stat-sub">A. Stratton (NYE)</div></div>
+      <div class="stat-card yellow"><div class="stat-label">League Average</div><div class="stat-value">0.791</div><div class="stat-sub">All qualified players</div></div>
+      <div class="stat-card red"><div class="stat-label">Lowest OEFF</div><div class="stat-value">0.698</div><div class="stat-sub">Min qualified</div></div>
+      <div class="stat-card"><div class="stat-label">Players Ranked</div><div class="stat-value">312</div><div class="stat-sub">G &gt; 3 threshold</div></div>
+    </div>
+    <div class="section-title"><span class="num">01 /</span> Full Leaderboard</div>
+    <div class="filter-row" id="rankTeamFilters">
+      <div class="filter-chip active" onclick="filterRank('all',this)">All Teams</div>
+      <div class="filter-chip" onclick="filterRank('NYE',this)">NYE</div>
+      <div class="filter-chip" onclick="filterRank('PHX',this)">PHX</div>
+      <div class="filter-chip" onclick="filterRank('ATL',this)">ATL</div>
+      <div class="filter-chip" onclick="filterRank('SEA',this)">SEA</div>
+      <div class="filter-chip" onclick="filterRank('CHI',this)">CHI</div>
+      <div class="filter-chip" onclick="filterRank('SFR',this)">SFR</div>
+      <div class="filter-chip" onclick="filterRank('LAX',this)">LAX</div>
+      <div class="filter-chip" onclick="filterRank('DEN',this)">DEN</div>
+      <div class="filter-chip" onclick="filterRank('BOS',this)">BOS</div>
+      <div class="filter-chip" onclick="filterRank('MIA',this)">MIA</div>
+    </div>
+    <div class="panel" style="padding:0">
+      <div class="rank-row header">
+        <div style="width:34px">#</div>
+        <div style="flex:1">Player</div>
+        <div style="width:58px">Team</div>
+        <div style="width:38px">Pos</div>
+        <div style="width:66px;text-align:right">Pred</div>
+        <div style="width:66px;text-align:right">Actual</div>
+        <div style="width:56px;text-align:right">Δ</div>
+        <div style="flex:1;min-width:70px;padding-left:14px">Bar</div>
+      </div>
+      <div id="rankList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE: PLAYER LOOKUP ═══════════════════════ -->
+<div id="page-lookup" class="page">
+  <div class="hero-band">
+    <div class="eyebrow">// Individual Player Analysis</div>
+    <h1>Player<br><em>Lookup</em></h1>
+    <p>Search for any player to view their detailed stats, OEFF prediction, and performance breakdown. Click any row to expand the profile.</p>
+  </div>
+  <div class="page-inner">
+    <div class="search-bar">
+      <input class="search-input" id="playerSearch" placeholder="Search by name, team, or position..." oninput="filterPlayers()">
+      <button class="search-btn" onclick="clearSearch()">Clear</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-chip active" onclick="filterPos('all',this)">All Positions</div>
+      <div class="filter-chip" onclick="filterPos('H',this)">Handler (H)</div>
+      <div class="filter-chip" onclick="filterPos('C',this)">Cutter (C)</div>
+      <div class="filter-chip" onclick="filterPos('H/C',this)">Hybrid</div>
+    </div>
+
+    <div id="profileCard" class="player-profile">
+      <div>
+        <div class="profile-avatar" id="profileInitials">JM</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-team" id="profileTeamPos">—</div>
+        <div style="margin-top:12px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Pred. OEFF</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--accent);line-height:1" id="profilePredOEFF">—</div>
+          <div id="profileDelta" style="margin-top:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div class="profile-stats" id="profileStats"></div>
+        <div style="margin-top:14px"><div class="panel-title">// Performance Breakdown</div><div id="profileBars"></div></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="num">01 /</span> Player Directory</div>
+    <div class="panel" style="padding:0">
+      <table>
+        <thead><tr><th>Player</th><th>Team</th><th>Pos</th><th>G</th><th>+/-</th><th>Cmp%</th><th>OPP</th><th>SCR</th><th>Pred OEFF</th><th>Actual</th><th>Δ</th></tr></thead>
+        <tbody id="playerTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE: REPORT CARDS ═══════════════════════ -->
+<div id="page-reportcards" class="page">
+  <div class="hero-band">
+    <div class="eyebrow">// Player Evaluation Cards</div>
+    <h1>Report<br><em>Cards</em></h1>
+    <p>Graded performance summaries for every qualified player, based on predicted OEFF relative to league average. Click any card to view the full profile.</p>
+  </div>
+  <div class="page-inner">
+    <div class="stat-row">
+      <div class="stat-card green"><div class="stat-label">Grade A</div><div class="stat-value" id="gradeACount">—</div><div class="stat-sub">OEFF ≥ 0.820</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Grade B</div><div class="stat-value" id="gradeBCount">—</div><div class="stat-sub">OEFF 0.750–0.819</div></div>
+      <div class="stat-card red"><div class="stat-label">Grade C</div><div class="stat-value" id="gradeCCount">—</div><div class="stat-sub">OEFF &lt; 0.750</div></div>
+    </div>
+    <div class="section-title"><span class="num">01 /</span> All Report Cards</div>
+    <div class="filter-row">
+      <div class="filter-chip active" onclick="filterCards('all',this)">All Grades</div>
+      <div class="filter-chip" onclick="filterCards('A',this)">Grade A ✦</div>
+      <div class="filter-chip" onclick="filterCards('B',this)">Grade B</div>
+      <div class="filter-chip" onclick="filterCards('C',this)">Grade C</div>
+    </div>
+    <div class="report-grid" id="reportGrid"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE: STORY ═══════════════════════ -->
+<div id="page-story" class="page">
+  <div class="hero-band">
+    <div class="eyebrow">// The Data Behind the Disc</div>
+    <h1>How We Built a<br><em>Crystal Ball</em></h1>
+    <p>A deep dive into the methodology, findings, and implications of building a machine learning model that predicts offensive efficiency in professional Ultimate Frisbee.</p>
+  </div>
+  <div class="page-inner">
+    <div class="story-grid">
+      <div class="story-body">
+        <h3>The Problem</h3>
+        <p>Offensive efficiency (OEFF) is one of the most important team-level metrics in competitive Ultimate Frisbee — but it's a lagging indicator. By the time a team knows their OEFF is suffering, the damage is done. The question we set out to answer: <strong>can we predict OEFF from individual player statistics before the season ends?</strong></p>
+        <div class="highlight">"If we can identify which player behaviors drive team offensive efficiency, coaches can make targeted adjustments mid-season rather than reacting after the fact."</div>
+
+        <h3>The Data</h3>
+        <p>We collected player statistics from <strong>2021 through 2025</strong>, covering hundreds of player-seasons across the professional league. After applying a minimum games filter (G &gt; 3) to remove noise from low-sample players, we had <strong>312 clean records</strong> spanning 14 candidate features including completions, assists, turnovers, and plus/minus.</p>
+        <p>Null values were encoded as several placeholder strings ('--', 'N/A', 'none') in the source data, requiring careful preprocessing before any modeling could begin.</p>
+
+        <h3>Feature Selection</h3>
+        <p>Not all statistics are created equal. We first filtered by correlation with OEFF using a threshold of <strong>|r| ≥ 0.20</strong>, removing features with little predictive signal. We then used Random Forest feature importance to rank surviving features, selecting the top 8 for forward selection search.</p>
+        <p>The result was striking: <strong>plus/minus differential (+/- ▼)</strong> was far and away the most important single predictor (importance: 0.342), followed by opportunities (OPP) and scoring touches (SCR). This makes intuitive sense — players with high plus/minus are on the field during more successful offensive possessions.</p>
+        <div class="highlight">The top three features — plus/minus, opportunities, and scoring touches — account for <strong>79.3% of total model importance</strong>.</div>
+
+        <h3>Model Selection</h3>
+        <p>Five model types were evaluated: Linear Regression, Ridge, Lasso, Random Forest, and Gradient Boosting. Random Forest led on cross-validated R² (0.870) with Gradient Boosting close behind (0.824). Linear models underperformed, suggesting non-linear relationships between player stats and team OEFF.</p>
+        <p>Forward feature selection on the top 8 features across three model architectures produced the final winner: a <strong>Random Forest on 6 features</strong>, achieving a cross-validated R² of 0.870 and in-sample R² of 0.923.</p>
+
+        <h3>What the Residuals Tell Us</h3>
+        <p>The residual distribution is roughly centered at zero with a standard deviation of ~0.031, indicating no systematic bias. The top over-performers (actual OEFF exceeding predictions by 0.06+) trend toward handlers — suggesting that handler-specific intangibles may not be fully captured by the current feature set.</p>
+        <p>Conversely, top under-performers trend toward cutters, pointing to a clear next step: <strong>position-specific sub-models</strong>.</p>
+
+        <h3>What's Next</h3>
+        <p>The model is currently trained on aggregate season statistics. Future work should explore rolling-window mid-season predictions, position-specific models, opponent-adjusted statistics, and integration with real-time throw data if available.</p>
+
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Data Collection &amp; Cleaning</div><div class="tl-desc">2021–2025 seasons, null handling, G &gt; 3 filter applied</div></div></div>
+          <div class="tl-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Correlation Filtering</div><div class="tl-desc">|r| ≥ 0.20 threshold removed low-signal features</div></div></div>
+          <div class="tl-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Forward Feature Selection</div><div class="tl-desc">Greedy search over top 8 RF-ranked features</div></div></div>
+          <div class="tl-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Final Model Deployed</div><div class="tl-desc">Random Forest, 6 features, CV R² = 0.870</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="insight-card"><div class="insight-label">Model R²</div><div class="insight-num">87%</div><div class="insight-text">of OEFF variance explained by just 6 player statistics</div></div>
+        <div class="insight-card"><div class="insight-label">Key Driver</div><div class="insight-num">+/-</div><div class="insight-text">Plus/minus is 5× more important than any other non-volume stat</div></div>
+        <div class="insight-card"><div class="insight-label">Error Rate</div><div class="insight-num">3.1%</div><div class="insight-text">Average prediction error as fraction of mean OEFF</div></div>
+        <div class="insight-card"><div class="insight-label">Seasons</div><div class="insight-num">5</div><div class="insight-text">Years of data from 2021 through 2025 used in training</div></div>
+        <div class="insight-card"><div class="insight-label">Players</div><div class="insight-num">312</div><div class="insight-text">Qualified player-seasons after games-played filter</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>OEFF Prediction Model · Ultimate Frisbee Analytics</span>
+  <span>5-Fold CV · Random Forest · 2021–2025</span>
+  <span>CV R² = 0.870 · RMSE = 0.031</span>
+</footer>
+
+<button id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const PLAYERS = [
+  { name:"A. Stratton", team:"NYE", pos:"H",   g:18, pm:22, cmp:.924, opp:41, scr:9, ast:14, pp:7, pred:.834, actual:.904 },
+  { name:"J. Mercer",   team:"PHX", pos:"H",   g:16, pm:20, cmp:.911, opp:37, scr:8, ast:12, pp:6, pred:.792, actual:.871 },
+  { name:"D. Reyes",    team:"ATL", pos:"C",   g:17, pm:19, cmp:.896, opp:35, scr:7, ast:10, pp:5, pred:.793, actual:.856 },
+  { name:"M. Ellison",  team:"SEA", pos:"H",   g:19, pm:21, cmp:.901, opp:39, scr:8, ast:13, pp:7, pred:.811, actual:.849 },
+  { name:"C. Park",     team:"SFR", pos:"C",   g:15, pm:17, cmp:.887, opp:33, scr:7, ast:9,  pp:5, pred:.779, actual:.843 },
+  { name:"T. Vickers",  team:"CHI", pos:"H",   g:14, pm:16, cmp:.872, opp:31, scr:6, ast:9,  pp:4, pred:.774, actual:.831 },
+  { name:"O. Hartmann", team:"SEA", pos:"C",   g:16, pm:18, cmp:.893, opp:34, scr:7, ast:10, pp:5, pred:.763, actual:.819 },
+  { name:"B. Nguyen",   team:"BOS", pos:"H",   g:20, pm:23, cmp:.918, opp:42, scr:9, ast:15, pp:8, pred:.826, actual:.814 },
+  { name:"F. Torres",   team:"DEN", pos:"C",   g:13, pm:15, cmp:.862, opp:29, scr:6, ast:7,  pp:4, pred:.751, actual:.809 },
+  { name:"I. Coleman",  team:"NYE", pos:"H",   g:17, pm:19, cmp:.899, opp:36, scr:7, ast:12, pp:6, pred:.803, actual:.800 },
+  { name:"G. Wallis",   team:"LAX", pos:"C",   g:15, pm:14, cmp:.855, opp:28, scr:5, ast:7,  pp:3, pred:.735, actual:.795 },
+  { name:"Z. Klein",    team:"MIA", pos:"H/C", g:12, pm:13, cmp:.848, opp:26, scr:5, ast:6,  pp:3, pred:.728, actual:.790 },
+  { name:"H. Osei",     team:"ATL", pos:"C",   g:14, pm:15, cmp:.858, opp:30, scr:6, ast:8,  pp:4, pred:.742, actual:.785 },
+  { name:"W. Lund",     team:"PHX", pos:"H",   g:18, pm:17, cmp:.875, opp:35, scr:7, ast:11, pp:5, pred:.769, actual:.781 },
+  { name:"P. Walsh",    team:"BOS", pos:"H",   g:18, pm:20, cmp:.907, opp:38, scr:8, ast:13, pp:7, pred:.833, actual:.779 },
+  { name:"L. Fernandez",team:"MIA", pos:"C",   g:14, pm:17, cmp:.879, opp:32, scr:6, ast:9,  pp:5, pred:.824, actual:.766 },
+  { name:"S. Okonkwo",  team:"DEN", pos:"H",   g:16, pm:15, cmp:.861, opp:30, scr:6, ast:8,  pp:4, pred:.820, actual:.758 },
+  { name:"R. Nakamura", team:"LAX", pos:"C",   g:13, pm:14, cmp:.849, opp:27, scr:5, ast:6,  pp:3, pred:.812, actual:.744 },
+  { name:"K. Bridges",  team:"SFR", pos:"H/C", g:11, pm:12, cmp:.831, opp:24, scr:4, ast:5,  pp:2, pred:.783, actual:.711 },
+  { name:"N. Tran",     team:"CHI", pos:"C",   g:10, pm:10, cmp:.822, opp:21, scr:4, ast:4,  pp:2, pred:.712, actual:.698 },
+];
+
+function grade(pred){ return pred>=.820?'A':pred>=.750?'B':'C'; }
+
+// ── PAGE NAV ─────────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if(b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  window.scrollTo(0,0);
+  if(id==='dashboard'){ drawScatter(); drawHist(); }
+}
+
+// scroll top
+window.addEventListener('scroll',()=>{ document.getElementById('scrollTop').classList.toggle('shown',window.scrollY>300); });
+
+// ── RANKINGS ─────────────────────────────────────────────────────────────────
+let rankFilter='all';
+function renderRankings(){
+  const sorted=[...PLAYERS].sort((a,b)=>b.pred-a.pred);
+  const data=rankFilter==='all'?sorted:sorted.filter(p=>p.team===rankFilter);
+  const list=document.getElementById('rankList');
+  list.innerHTML='';
+  data.forEach((p,i)=>{
+    const diff=(p.actual-p.pred).toFixed(3);
+    const sign=diff>0?'+':'';
+    const dCol=diff>0?'var(--accent)':'var(--accent3)';
+    const posCol=p.pos==='H'?'#50a0ff':'var(--accent2)';
+    const bw=Math.round(p.pred/1.0*100);
+    list.innerHTML+=`<div class="rank-row" style="cursor:pointer" onclick="openProfile('${p.name}')">
+      <div class="rank-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="rank-name">${p.name}</div>
+      <div class="rank-team"><span class="badge badge-blue">${p.team}</span></div>
+      <div class="rank-pos" style="color:${posCol}">${p.pos}</div>
+      <div class="rank-val" style="color:var(--accent)">${p.pred.toFixed(3)}</div>
+      <div class="rank-val">${p.actual.toFixed(3)}</div>
+      <div class="rank-val" style="color:${dCol}">${sign}${diff}</div>
+      <div class="rank-bar" style="padding-left:14px"><div class="rank-bar-fill" style="width:${bw}%"></div></div>
+    </div>`;
+  });
+}
+function filterRank(team,el){
+  rankFilter=team;
+  document.querySelectorAll('#rankTeamFilters .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderRankings();
+}
+
+// ── PLAYER LOOKUP ─────────────────────────────────────────────────────────────
+let posFilter='all';
+function renderPlayerTable(){
+  const q=(document.getElementById('playerSearch')?.value||'').toLowerCase();
+  const tb=document.getElementById('playerTable');
+  tb.innerHTML='';
+  PLAYERS.forEach(p=>{
+    if(posFilter!=='all'&&p.pos!==posFilter) return;
+    if(q&&![p.name,p.team,p.pos].some(v=>v.toLowerCase().includes(q))) return;
+    const diff=(p.actual-p.pred).toFixed(3);
+    const sign=diff>0?'+':'';
+    const dCls=diff>0?'badge-green':'badge-red';
+    const posCol=p.pos==='H'?'#50a0ff':'var(--accent2)';
+    tb.innerHTML+=`<tr style="cursor:pointer" onclick="openProfile('${p.name}')">
+      <td class="name">${p.name}</td>
+      <td><span class="badge badge-blue">${p.team}</span></td>
+      <td style="color:${posCol}">${p.pos}</td>
+      <td>${p.g}</td>
+      <td style="color:var(--accent)">${p.pm>0?'+':''}${p.pm}</td>
+      <td>${(p.cmp*100).toFixed(1)}%</td>
+      <td>${p.opp}</td>
+      <td>${p.scr}</td>
+      <td style="color:var(--accent);font-weight:600">${p.pred.toFixed(3)}</td>
+      <td>${p.actual.toFixed(3)}</td>
+      <td><span class="badge ${dCls}">${sign}${diff}</span></td>
+    </tr>`;
+  });
+}
+function filterPlayers(){ renderPlayerTable(); }
+function clearSearch(){ document.getElementById('playerSearch').value=''; renderPlayerTable(); }
+function filterPos(pos,el){
+  posFilter=pos;
+  document.querySelectorAll('#page-lookup .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderPlayerTable();
+}
+
+// ── PROFILE CARD ──────────────────────────────────────────────────────────────
+function openProfile(name){
+  const p=PLAYERS.find(x=>x.name===name); if(!p) return;
+  showPage('lookup');
+  const initials=p.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+  document.getElementById('profileInitials').textContent=initials;
+  document.getElementById('profileName').textContent=p.name;
+  document.getElementById('profileTeamPos').textContent=`${p.team} · ${p.pos==='H'?'Handler':p.pos==='C'?'Cutter':'Hybrid'}`;
+  document.getElementById('profilePredOEFF').textContent=p.pred.toFixed(3);
+  const diff=(p.actual-p.pred).toFixed(3);
+  const sign=diff>0?'+':'';
+  document.getElementById('profileDelta').innerHTML=`<span style="color:${diff>0?'var(--accent)':'var(--accent3)'};font-family:'DM Mono',monospace;font-size:12px">Actual: ${p.actual.toFixed(3)} (${sign}${diff})</span>`;
+  document.getElementById('profileStats').innerHTML=[
+    {val:p.g,lbl:'Games'},{val:(p.pm>0?'+':'')+p.pm,lbl:'+/-'},
+    {val:(p.cmp*100).toFixed(0)+'%',lbl:'Cmp%'},{val:p.opp,lbl:'OPP'},
+    {val:p.scr,lbl:'SCR'},{val:p.ast,lbl:'AST'},
+  ].map(s=>`<div class="profile-stat-box"><div class="val">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join('');
+  document.getElementById('profileBars').innerHTML=[
+    {lbl:'+/- ▼',val:p.pm,max:25,disp:(p.pm>0?'+':'')+p.pm,cls:''},
+    {lbl:'OPP',  val:p.opp,max:45,disp:p.opp,cls:''},
+    {lbl:'SCR',  val:p.scr,max:10,disp:p.scr,cls:'yellow'},
+    {lbl:'Cmp%', val:p.cmp,max:1, disp:(p.cmp*100).toFixed(0)+'%',cls:'yellow'},
+    {lbl:'AST',  val:p.ast,max:16,disp:p.ast,cls:'purple'},
+  ].map(b=>`<div class="bar-row"><div class="bar-label">${b.lbl}</div><div class="bar-track"><div class="bar-fill ${b.cls}" style="width:${Math.min(100,Math.round(b.val/b.max*100))}%"></div></div><div class="bar-val">${b.disp}</div></div>`).join('');
+  const card=document.getElementById('profileCard');
+  card.classList.add('visible');
+  setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+
+// ── REPORT CARDS ──────────────────────────────────────────────────────────────
+let cardFilter='all';
+function renderReportCards(){
+  let a=0,b=0,c=0;
+  PLAYERS.forEach(p=>{ const g=grade(p.pred); if(g==='A')a++;else if(g==='B')b++;else c++; });
+  document.getElementById('gradeACount').textContent=a;
+  document.getElementById('gradeBCount').textContent=b;
+  document.getElementById('gradeCCount').textContent=c;
+  const src=cardFilter==='all'?PLAYERS:PLAYERS.filter(p=>grade(p.pred)===cardFilter);
+  const grid=document.getElementById('reportGrid');
+  grid.innerHTML='';
+  src.forEach(p=>{
+    const g=grade(p.pred);
+    const gCls=g==='A'?'grade-a':g==='B'?'grade-b':'grade-c';
+    const diff=(p.actual-p.pred).toFixed(3);
+    const sign=diff>0?'+':'';
+    const dCls=diff>0?'badge-green':'badge-red';
+    const bars=[
+      {lbl:'+/-', val:p.pm, max:25,  col:'var(--accent)'},
+      {lbl:'OPP', val:p.opp,max:45,  col:'var(--accent)'},
+      {lbl:'SCR', val:p.scr,max:10,  col:'var(--accent2)'},
+      {lbl:'Cmp%',val:p.cmp,max:1.0, col:'var(--accent2)'},
+    ].map(b=>{
+      const pct=Math.min(100,Math.round(b.val/b.max*100));
+      return `<div class="mini-bar-row"><div class="mini-bar-lbl">${b.lbl}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pct}%;background:${b.col}"></div></div><div class="mini-bar-val">${b.lbl==='Cmp%'?(b.val*100).toFixed(0)+'%':b.val}</div></div>`;
+    }).join('');
+    grid.innerHTML+=`<div class="report-card" onclick="openProfile('${p.name}')">
+      <div class="report-card-top"><div><div class="report-card-name">${p.name}</div><div class="report-card-team">${p.team} · ${p.pos}</div></div><div class="grade-ring ${gCls}">${g}</div></div>
+      <div>${bars}</div>
+      <div class="report-card-footer"><div><div class="oeff-label">Pred. OEFF</div><div class="oeff-predicted">${p.pred.toFixed(3)}</div></div><span class="badge ${dCls}">${sign}${diff}</span></div>
+    </div>`;
+  });
+}
+function filterCards(g,el){
+  cardFilter=g;
+  document.querySelectorAll('#page-reportcards .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderReportCards();
+}
+
+// ── SCATTER CANVAS ────────────────────────────────────────────────────────────
+function drawScatter(){
+  const canvas=document.getElementById('scatterCanvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const pad={t:14,r:14,b:34,l:44};
+  const iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+  const xMin=.60,xMax=1.01,yMin=.60,yMax=1.01;
+  const toX=v=>pad.l+(v-xMin)/(xMax-xMin)*iw;
+  const toY=v=>pad.t+ih-(v-yMin)/(yMax-yMin)*ih;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
+  for(let v=.65;v<=1.0;v=Math.round((v+.1)*10)/10){
+    ctx.beginPath();ctx.moveTo(toX(v),pad.t);ctx.lineTo(toX(v),pad.t+ih);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad.l,toY(v));ctx.lineTo(pad.l+iw,toY(v));ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(255,82,82,.4)';ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(toX(xMin),toY(xMin));ctx.lineTo(toX(xMax),toY(xMax));ctx.stroke();
+  ctx.setLineDash([]);
+  PLAYERS.forEach(p=>{
+    ctx.beginPath();ctx.arc(toX(p.actual),toY(p.pred),5,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,229,176,.75)';ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=.5;ctx.stroke();
+  });
+  for(let i=0;i<55;i++){
+    const a=.63+Math.random()*.34,noise=(Math.random()-.5)*.055;
+    ctx.beginPath();ctx.arc(toX(a),toY(Math.min(.99,Math.max(.63,a+noise))),3.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,229,176,.4)';ctx.fill();
+  }
+  ctx.fillStyle='rgba(90,122,153,.8)';ctx.font='10px DM Mono,monospace';ctx.textAlign='center';
+  for(let v=.7;v<=1.0;v=Math.round((v+.1)*10)/10) ctx.fillText(v.toFixed(1),toX(v),H-3);
+  ctx.textAlign='right';
+  for(let v=.7;v<=1.0;v=Math.round((v+.1)*10)/10) ctx.fillText(v.toFixed(1),pad.l-4,toY(v)+4);
+  ctx.fillStyle='rgba(90,122,153,.6)';ctx.textAlign='center';ctx.font='10px Sora,sans-serif';
+  ctx.fillText('Actual OEFF',W/2,H);
+}
+
+// ── HISTOGRAM CANVAS ──────────────────────────────────────────────────────────
+function drawHist(){
+  const canvas=document.getElementById('histCanvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const pad={t:14,r:14,b:34,l:44};
+  const iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+  const bins=[{l:'-0.08',c:3},{l:'-0.06',c:8},{l:'-0.04',c:15},{l:'-0.02',c:24},
+              {l:' 0.00',c:32},{l:'+0.02',c:26},{l:'+0.04',c:17},{l:'+0.06',c:9},{l:'+0.08',c:4}];
+  const maxC=Math.max(...bins.map(b=>b.c));
+  const bw=iw/bins.length;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+  for(let v=0;v<=maxC;v+=10){
+    const y=pad.t+ih-(v/maxC)*ih;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+iw,y);ctx.stroke();
+  }
+  const zeroX=pad.l+iw/2;
+  ctx.strokeStyle='rgba(255,82,82,.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(zeroX,pad.t);ctx.lineTo(zeroX,pad.t+ih);ctx.stroke();
+  ctx.setLineDash([]);
+  bins.forEach((b,i)=>{
+    const bH=(b.c/maxC)*ih;
+    const x=pad.l+i*bw+4,y=pad.t+ih-bH;
+    const isPos=i>=Math.floor(bins.length/2);
+    const grad=ctx.createLinearGradient(0,y,0,y+bH);
+    if(isPos){grad.addColorStop(0,'rgba(0,229,176,.85)');grad.addColorStop(1,'rgba(0,229,176,.18)');}
+    else{grad.addColorStop(0,'rgba(255,82,82,.85)');grad.addColorStop(1,'rgba(255,82,82,.18)');}
+    ctx.fillStyle=grad;
+    ctx.beginPath();ctx.roundRect(x,y,bw-8,bH,[3,3,0,0]);ctx.fill();
+  });
+  ctx.fillStyle='rgba(90,122,153,.8)';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  bins.forEach((b,i)=>ctx.fillText(b.l,pad.l+i*bw+bw/2,H-3));
+  ctx.fillStyle='rgba(90,122,153,.6)';ctx.font='10px Sora,sans-serif';
+  ctx.fillText('Residual (Actual − Predicted)',W/2,H);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderRankings();
+renderPlayerTable();
+renderReportCards();
+drawScatter();
+drawHist();
+</script>
+</body>
+</html>
